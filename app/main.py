@@ -16,7 +16,7 @@ app = FastAPI(title="AI Content Extractor API")
 pipeline = ProcessingPipeline()
 db = VectorStore()
 
-# Gemini client initialize kiya hai (GEMINI_API_KEY .env se uthayega)
+# Google client initialize kiya hai (GOOGLE_API_KEY .env se uthayega)
 client = genai.Client(api_key=os.getenv("GOOGLE_API_KEY"))
 
 class VideoRequest(BaseModel):
