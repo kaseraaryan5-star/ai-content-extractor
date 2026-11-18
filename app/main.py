@@ -17,7 +17,7 @@ pipeline = ProcessingPipeline()
 db = VectorStore()
 
 # Gemini client initialize kiya hai (GEMINI_API_KEY .env se uthayega)
-client = genai.Client(api_key=os.getenv("GEMINI_API_KEY"))
+client = genai.Client(api_key=os.getenv("GOOGLE_API_KEY"))
 
 class VideoRequest(BaseModel):
     url: str
