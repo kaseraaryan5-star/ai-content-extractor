@@ -12,7 +12,7 @@ st.title("📹 YouTube Video RAG Extractor")
 st.write("Apna YouTube video link do aur uske content se kuch bhi sawaal pucho!")
 
 # Sidebar: video URL + ek baar analyze
-with st.sidebar:
+with st.container():
     st.header("1. Video URL")
     video_url = st.text_input("YouTube Video URL:")
 
@@ -40,7 +40,7 @@ query = st.text_input("Video ke bare mein kya janna chahte ho?")
 
 if query:
     if not video_url:
-        st.warning("Pehle sidebar mein YouTube URL daalo.")
+        st.warning("Pehle upar YouTube URL daalo.")
     else:
         st.markdown("### Answer:")
         try:
