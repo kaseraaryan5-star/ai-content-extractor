@@ -1,8 +1,4 @@
-fastapi
-uvicorn
-qdrant-client
-langchain
-langchain-openai
+streamlit
+google-genai
 python-dotenv
 yt-dlp
-openai-whisper

@@ -1,64 +1,50 @@
 import os
-import subprocess
-import numpy as np
-import imageio_ffmpeg
-import yt_dlp
-import whisper
 from pathlib import Path
+import yt_dlp
+from dotenv import load_dotenv
+from app.vector_db import VectorStore
+from app.utils import get_youtube_transcript
+
+load_dotenv()
 
 class ProcessingPipeline:
     def __init__(self, data_dir="data"):
         self.data_dir = Path(data_dir)
         self.data_dir.mkdir(exist_ok=True)
-        self.ffmpeg_exe = imageio_ffmpeg.get_ffmpeg_exe()
-        print("Loading Whisper model...")
-        self.model = whisper.load_model("base")
+        self.vector_store = VectorStore()
 
-    def process_video(self, url):
-        """YouTube video processing pipeline"""
-        output_dir = "data"
-        os.makedirs(output_dir, exist_ok=True)
+    def process_video(self, url: str):
+        """YouTube video processing pipeline using native transcript."""
+        print(f"Fetching video metadata for: {url}")
+        video_title = "Processed Video"
 
-        print("Downloading audio via yt-dlp...")
-        ydl_opts = {
-            'format': 'bestaudio',
-            'outtmpl': os.path.join(output_dir, 'downloaded_audio.%(ext)s'),
-            'noplaylist': True,
-            'postprocessors': [],
-            'quiet': True
-        }
+        # Quick metadata fetch without downloading video
+        try:
+            with yt_dlp.YoutubeDL({'quiet': True, 'no_warnings': True}) as ydl:
+                info = ydl.extract_info(url, download=False)
+                video_title = info.get('title', 'Processed Video')
+        except Exception as e:
+            print(f"Could not fetch title: {e}")
 
-        with yt_dlp.YoutubeDL(ydl_opts) as ydl:
-            info = ydl.extract_info(url, download=True)
-            filename = ydl.prepare_filename(info)
+        # Fetch YouTube Native Transcript
+        print("Attempting to fetch YouTube transcript directly...")
+        transcript_text = ""
+        try:
+            transcript_text = get_youtube_transcript(url)
+        except Exception as e:
+            print(f"Direct transcript fetch error: {e}")
 
-        print(f"Downloaded raw file: {filename}")
+        if not transcript_text or len(transcript_text.strip()) < 20:
+            transcript_text = f"Video processed via title: {video_title}."
 
-        # Convert audio directly to 16kHz mono PCM numpy array
-        print("Processing audio into NumPy array...")
-        cmd = [
-            self.ffmpeg_exe, '-nostdin', '-y',
-            '-i', filename,
-            '-f', 's16le',
-            '-acodec', 'pcm_s16le',
-            '-ac', '1',
-            '-ar', '16000',
-            '-'
-        ]
+        # Final content combination
+        final_indexed_content = f"Transcript:\n{transcript_text}"
 
-        process = subprocess.run(cmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE, check=True)
-        audio_np = np.frombuffer(process.stdout, dtype=np.int16).flatten().astype(np.float32) / 32768.0
+        # Index directly in Qdrant
+        print("Passing content to VectorStore for chunking and Qdrant indexing...")
+        self.vector_store.upsert_transcript(
+            final_indexed_content,
+            {"url": url, "title": video_title}
+        )
 
-        print("Transcribing audio (this may take a moment)...")
-        result = self.model.transcribe(audio_np)
-        
-        # Cleanup
-        if os.path.exists(filename):
-            os.remove(filename)
-            
-        return result["text"]
-
-if __name__ == "__main__":
-    pipeline = ProcessingPipeline()
-    test_url = "https://www.youtube.com/watch?v=dQw4w9WgXcQ"
-    print("Test transcript:", pipeline.process_video(test_url))
+        return final_indexed_content
