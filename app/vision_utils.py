@@ -199,10 +199,12 @@ def ask_video(url: str, question: str):
     """Description (cached) par tez, streaming jawab. Bolne/kahani wale sawaalon ke liye."""
     description = describe_video(url)
     prompt = (
-        "Below is a description of a video. Answer the question using only this description. "
-        "If the answer is not in the description, clearly say that the video does not mention it. "
+        "You are answering questions about a video you have watched. "
+        "Use only the video details given below. "
+        "If the answer is not covered, say that the video does not mention it. "
+        "Never say 'the description' or 'the provided text'; speak as if you watched the video yourself. "
         "Always answer in English, even if the video or the question is in Hindi.\n\n"
-        f"[VIDEO DESCRIPTION]\n{description}\n\n[QUESTION]\n{question}"
+        f"[VIDEO DETAILS]\n{description}\n\n[QUESTION]\n{question}"
     )
     yield from _stream(prompt)
 
