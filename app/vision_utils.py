@@ -36,7 +36,7 @@ DESCRIBE_PROMPT = (
 # ---------------------------------------------------------------- helpers
 
 def _cache_path(url: str) -> str:
-    return os.path.join(CACHE_DIR, hashlib.md5(url.encode()).hexdigest() + ".txt")
+    return os.path.join(CACHE_DIR, hashlib.md5(("v2:" + url).encode()).hexdigest() + ".txt")
 
 
 def _config(thinking: bool = True, resolution: str = "MEDIA_RESOLUTION_LOW"):
@@ -199,9 +199,10 @@ def ask_video(url: str, question: str):
     """Description (cached) par tez, streaming jawab. Bolne/kahani wale sawaalon ke liye."""
     description = describe_video(url)
     prompt = (
-        "Neeche ek video ka description hai. Sirf isi ke basis par sawaal ka jawab do. "
-        "Agar jawab description mein nahi hai to saaf bolo ki video mein ye nahi mila.\n\n"
-        f"[VIDEO DESCRIPTION]\n{description}\n\n[SAWAAL]\n{question}"
+        "Below is a description of a video. Answer the question using only this description. "
+        "If the answer is not in the description, clearly say that the video does not mention it. "
+        "Always answer in English, even if the video or the question is in Hindi.\n\n"
+        f"[VIDEO DESCRIPTION]\n{description}\n\n[QUESTION]\n{question}"
     )
     yield from _stream(prompt)
 
@@ -211,12 +212,12 @@ def ask_video(url: str, question: str):
 def _find_range(description: str, question: str):
     """Description se pata lagata hai ki sawaal video ke kis hisse ka hai."""
     prompt = (
-        "Neeche video ka description hai. Har 'VIDEO PART' header us tukde ka start dikhata hai, "
-        "aur andar ke timestamps us start se gine gaye hain (header start + timestamp = asli time).\n"
-        "Sawaal ka jawab video ke kis hisse mein hoga? Sirf 2 numbers likho: "
-        "start_seconds,end_seconds (poori video ke hisaab se). Hisse ko chhota rakho (max 300 second). "
-        "Kuch aur mat likho.\n\n"
-        f"[DESCRIPTION]\n{description}\n\n[SAWAAL]\n{question}"
+        "Below is a video description. Each 'VIDEO PART' header shows the start of that part, "
+        "and the timestamps inside are counted from that start (header start + timestamp = actual time).\n"
+        "Which part of the video would contain the answer to the question? Reply with only 2 numbers: "
+        "start_seconds,end_seconds (relative to the full video). Keep the range short (max 300 seconds). "
+        "Write nothing else.\n\n"
+        f"[DESCRIPTION]\n{description}\n\n[QUESTION]\n{question}"
     )
     try:
         nums = re.findall(r"\d+", _generate(prompt))
@@ -225,12 +226,12 @@ def _find_range(description: str, question: str):
             if end > start:
                 return start, min(end, start + 300)
     except Exception as e:
-        print(f"Range nahi mili: {e}")
+        print(f"Could not find range: {e}")
     return None
 
 
 def ask_video_visual(url: str, question: str):
-    """Sawaal wale hisse ko seedha video se, zyada detail par dekhta hai."""
+    """Answer from the relevant part of the video directly, at higher detail."""
     description = describe_video(url)
     rng = _find_range(description, question)
     print(f"Visual range: {rng}")
@@ -244,8 +245,9 @@ def ask_video_visual(url: str, question: str):
         video_metadata=types.VideoMetadata(**meta),
     )
     q = (
-        "Is video ke hisse ko dhyan se dekh kar jawab do. Jo dikhta hai wahi batao, "
-        "andaza mat lagao. Agar saaf nahi dikh raha to bolo.\n\nSawaal: " + question
+        "Watch this part of the video carefully and answer. Describe only what you can see, "
+        "do not guess. If something is not clearly visible, say so. "
+        "Always answer in English, even if the video or the question is in Hindi.\n\nQuestion: " + question
     )
     contents = types.Content(parts=[video, types.Part(text=q)])
     yield from _stream(contents, resolution="MEDIA_RESOLUTION_MEDIUM")
