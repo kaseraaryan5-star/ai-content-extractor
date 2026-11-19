@@ -24,15 +24,14 @@ CACHE_DIR = "data/video_cache"
 os.makedirs(CACHE_DIR, exist_ok=True)
 
 DESCRIBE_PROMPT = (
-    "Is video ko har 15-20 second ke hisse mein [MM:SS] ke saath describe karo. "
-    "Har hisse mein 2 cheezein alag likho:\n"
-    "DIKH RAHA HAI: jagah/background, har insaan (kapde, chehre ke expression, kya kar raha hai), "
-    "haath mein ya aas-paas ki cheezein, screen par dikhne wala text/graphics/logo, camera cut ya angle.\n"
-    "BOLA GAYA: kaun bola aur kya (important lines jaisi bolin waisi).\n"
-    "Naam tabhi likho jab bola gaya ho ya screen par likha ho, warna 'ek aadmi/ladki' likho, "
-    "andaza mat lagao. Timestamps is tukde ke start se (00:00) gino."
+    "Describe this video in segments of every 15-20 seconds, each starting with a [MM:SS] timestamp. "
+    "For each segment write two things:\n"
+    "VISIBLE: the location/background, each person (clothes, facial expressions, what they are doing), "
+    "objects in hand or nearby, any on-screen text/graphics/logos, and camera cuts or angles.\n"
+    "SPOKEN: who is speaking and what is said (quote important lines as spoken, in the original language).\n"
+    "Use a person's name only if it is spoken or shown on screen; otherwise write 'a man' or 'a woman'. "
+    "Do not guess. Count timestamps from the start of this segment (00:00)."
 )
-
 
 # ---------------------------------------------------------------- helpers
 
