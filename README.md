@@ -1,6 +1,6 @@
 # AI Content Extractor
 
-Ask questions about any public YouTube video. The pipeline downloads the audio, transcribes it with Whisper, indexes the transcript in Qdrant, and answers questions using the retrieved transcript chunks.
+Ask questions about any public YouTube video. The app sends the video to Gemini, which describes what is said and what is shown on screen in timestamped segments. Long videos are split into 10-minute chunks and analyzed in parallel, and the result is cached so follow-up questions are fast.
 
 **Live demo:** https://aryan-yt-analyzer-2026.streamlit.app
 
